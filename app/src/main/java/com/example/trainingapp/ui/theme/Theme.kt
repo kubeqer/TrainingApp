@@ -38,8 +38,7 @@ private val LightColorScheme = lightColorScheme(
 @Composable
 fun TrainingAppTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = false, // Set to false to use our custom colors
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {

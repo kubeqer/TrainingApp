@@ -3,7 +3,7 @@ package com.example.trainingapp.viewmodels
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.trainingapp.data.database.WorkoutDatabase
+import com.example.trainingapp.TrainingApp
 import com.example.trainingapp.data.repository.WorkoutHistoryRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
@@ -12,7 +12,8 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class ProgressViewModel(application: Application) : AndroidViewModel(application) {
-    private val database = WorkoutDatabase.getDatabase(application, viewModelScope)
+    private val app = application as TrainingApp
+    private val database = app.database
     private val workoutHistoryRepository = WorkoutHistoryRepository(database.dayExerciseDao())
 
     val weeklyWorkoutCount: StateFlow<Int> = workoutHistoryRepository.getWeeklyWorkoutCount()
@@ -49,13 +50,10 @@ class ProgressViewModel(application: Application) : AndroidViewModel(application
 
     fun refreshData() {
         viewModelScope.launch(Dispatchers.IO) {
-            // This would trigger data reload in a real app
-            // For the mock implementation, it's already being loaded in the repository
         }
     }
 }
 
-// Utility function for formatting time
 fun formatTime(timeInSeconds: Long): String {
     val hours = timeInSeconds / 3600
     val minutes = (timeInSeconds % 3600) / 60

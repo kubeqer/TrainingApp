@@ -3,8 +3,7 @@ package com.example.trainingapp.viewmodels
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.trainingapp.data.database.WorkoutDatabase
-import com.example.trainingapp.data.entity.BodyPart
+import com.example.trainingapp.TrainingApp
 import com.example.trainingapp.data.entity.Exercise
 import com.example.trainingapp.data.repository.BodyPartRepository
 import com.example.trainingapp.data.repository.ExerciseRepository
@@ -12,10 +11,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class ExerciseViewModel(application: Application) : AndroidViewModel(application) {
-    private val database = WorkoutDatabase.getDatabase(application, viewModelScope)
+    private val app = application as TrainingApp
+    private val database = app.database
     private val exerciseRepository = ExerciseRepository(database.exerciseDao())
     private val bodyPartRepository = BodyPartRepository(database.bodyPartDao())
 
@@ -51,12 +50,10 @@ class ExerciseViewModel(application: Application) : AndroidViewModel(application
 
         viewModelScope.launch(Dispatchers.IO) {
             if (bodyPartId == 0L) {
-                // If bodyPartId is 0, load all exercises
                 exerciseRepository.getAllExercises().observeForever { exercises ->
                     _exercises.value = exercises ?: emptyList()
                 }
             } else {
-                // Otherwise, load exercises for the specific body part
                 exerciseRepository.getExercisesByBodyPart(bodyPartId).observeForever { exercises ->
                     _exercises.value = exercises ?: emptyList()
                 }

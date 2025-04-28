@@ -1,5 +1,6 @@
 package com.example.trainingapp.screens.calendar
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -29,6 +30,8 @@ import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
+private const val TAG = "CalendarScreen"
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CalendarScreen(
@@ -40,12 +43,19 @@ fun CalendarScreen(
     val today = Calendar.getInstance().time
     val monthFormat = SimpleDateFormat("MMMM yyyy", Locale.getDefault())
 
+    Log.d(TAG, "CalendarScreen composable called")
+    Log.d(TAG, "Active plan: ${activePlan?.planName}")
+    Log.d(TAG, "Week schedule size: ${weekSchedule.size}")
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Training Schedule") },
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
+                    IconButton(onClick = {
+                        Log.d(TAG, "Navigate back from CalendarScreen")
+                        navController.popBackStack()
+                    }) {
                         Icon(Icons.Rounded.ArrowBack, contentDescription = "Back")
                     }
                 }
@@ -60,20 +70,17 @@ fun CalendarScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Month header
             Text(
                 text = monthFormat.format(today),
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold
             )
 
-            // Week view
             WeekView(
                 weekSchedule = weekSchedule,
                 today = today
             )
 
-            // Active plan
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp)
@@ -96,7 +103,10 @@ fun CalendarScreen(
 
                         if (activePlan != null) {
                             OutlinedButton(
-                                onClick = { /* Navigate to change active plan */ },
+                                onClick = {
+                                    Log.d(TAG, "Navigate to create_plan")
+                                    navController.navigate("create_plan")
+                                },
                                 colors = ButtonDefaults.outlinedButtonColors(
                                     contentColor = SportRed
                                 )
@@ -128,7 +138,10 @@ fun CalendarScreen(
                         )
 
                         Button(
-                            onClick = { navController.navigate("create_plan") },
+                            onClick = {
+                                Log.d(TAG, "Navigate to create_plan")
+                                navController.navigate("create_plan")
+                            },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(top = 8.dp),
@@ -142,7 +155,6 @@ fun CalendarScreen(
                 }
             }
 
-            // Today's workout
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp)
@@ -160,6 +172,7 @@ fun CalendarScreen(
                     )
 
                     val todayWorkout = weekSchedule.find { isSameDay(it.date, today) }?.workoutDay
+                    Log.d(TAG, "Today's workout: ${todayWorkout?.dayName}")
 
                     if (todayWorkout != null) {
                         Row(
@@ -192,7 +205,10 @@ fun CalendarScreen(
                             }
 
                             Button(
-                                onClick = { navController.navigate("workout_session/${activePlan?.planId ?: 0}") },
+                                onClick = {
+                                    Log.d(TAG, "Navigate to workout_session/${activePlan?.planId ?: 0}")
+                                    navController.navigate("workout_session/${activePlan?.planId ?: 0}")
+                                },
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor = SportRed
                                 )
@@ -216,7 +232,6 @@ fun CalendarScreen(
                 }
             }
 
-            // Upcoming workouts
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp)
@@ -236,6 +251,8 @@ fun CalendarScreen(
                     val upcomingWorkouts = weekSchedule
                         .filter { !isSameDay(it.date, today) && it.workoutDay != null }
                         .take(3)
+
+                    Log.d(TAG, "Upcoming workouts: ${upcomingWorkouts.size}")
 
                     if (upcomingWorkouts.isEmpty()) {
                         Box(

@@ -15,7 +15,7 @@ object WorkoutUtil {
             repsCompleted >= targetReps + 2 -> currentWeight * 1.05f // Increase by 5%
             repsCompleted >= targetReps -> currentWeight * 1.025f // Increase by 2.5%
             repsCompleted <= targetReps - 2 -> currentWeight * 0.95f // Decrease by 5%
-            else -> currentWeight // Keep the same
+            else -> currentWeight
         }
     }
 

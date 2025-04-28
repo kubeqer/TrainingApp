@@ -1,4 +1,3 @@
-// WorkoutSessionScreen.kt
 package com.example.trainingapp.screens.workout
 
 import androidx.compose.foundation.background
@@ -99,7 +98,6 @@ fun WorkoutSessionScreen(
         }
     ) { paddingValues ->
         if (exercises.isEmpty()) {
-            // Empty state
             Box(
                 modifier = Modifier
                     .fillMaxSize()

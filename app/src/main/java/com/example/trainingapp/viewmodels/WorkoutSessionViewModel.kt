@@ -3,8 +3,7 @@ package com.example.trainingapp.viewmodels
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.trainingapp.data.database.WorkoutDatabase
-import com.example.trainingapp.data.entity.DayExercise
+import com.example.trainingapp.TrainingApp
 import com.example.trainingapp.data.entity.Exercise
 import com.example.trainingapp.data.repository.WorkoutHistoryRepository
 import kotlinx.coroutines.Dispatchers
@@ -16,40 +15,30 @@ import kotlinx.coroutines.launch
 import java.util.Calendar
 
 class WorkoutSessionViewModel(application: Application) : AndroidViewModel(application) {
-    private val database = WorkoutDatabase.getDatabase(application, viewModelScope)
+    private val app = application as TrainingApp
+    private val database = app.database
     private val dayExerciseDao = database.dayExerciseDao()
     private val workoutDayDao = database.workoutDayDao()
     private val workoutHistoryRepository = WorkoutHistoryRepository(dayExerciseDao)
-
-    // Exercise data for current workout
     private val _currentExercises = MutableStateFlow<List<ExerciseWithSets>>(emptyList())
     val currentExercises: StateFlow<List<ExerciseWithSets>> = _currentExercises
-
-    // Workout timer
     private val _elapsedTime = MutableStateFlow(0L)
     val elapsedTime: StateFlow<Long> = _elapsedTime
-
     private val _isTimerRunning = MutableStateFlow(false)
     val isTimerRunning: StateFlow<Boolean> = _isTimerRunning
-
-    // Current workout data
     private var currentWorkoutId: Long? = null
     private var currentPlanId: Long? = null
     private var exercisesCompleted = 0
 
     fun startWorkout(planId: Long) {
         currentPlanId = planId
-
-        // Get today's day of week (1-7, where 1 is Monday)
         val dayOfWeek = Calendar.getInstance().get(Calendar.DAY_OF_WEEK)
         val adjustedDayOfWeek = if (dayOfWeek == Calendar.SUNDAY) 7 else dayOfWeek - 1
 
         viewModelScope.launch(Dispatchers.IO) {
-            // Find the workout day for this plan matching today's day of week
             workoutDayDao.getWorkoutDaysByPlan(planId).observeForever { days ->
                 val todayWorkout = days.find { it.dayNumber == adjustedDayOfWeek }
                 todayWorkout?.let { day ->
-                    // Load exercises for this day
                     dayExerciseDao.getDetailedExercisesForDay(day.dayId).observeForever { exercises ->
                         val exerciseWithSets = exercises.map { dayExerciseWithExercise ->
                             ExerciseWithSets(
@@ -60,13 +49,10 @@ class WorkoutSessionViewModel(application: Application) : AndroidViewModel(appli
                         _currentExercises.value = exerciseWithSets
                     }
                 } ?: run {
-                    // If no workout for today, just show an empty list
                     _currentExercises.value = emptyList()
                 }
             }
         }
-
-        // Start workout timer
         startTimer()
     }
 
@@ -93,8 +79,6 @@ class WorkoutSessionViewModel(application: Application) : AndroidViewModel(appli
                 val updatedExercise = exercise.copy(sets = updatedSets)
                 currentList[exerciseIndex] = updatedExercise
                 _currentExercises.value = currentList
-
-                // Check if all sets for this exercise are completed
                 if (updatedSets.all { it.isCompleted }) {
                     exercisesCompleted++
                 }
@@ -128,19 +112,15 @@ class WorkoutSessionViewModel(application: Application) : AndroidViewModel(appli
 
     fun completeWorkout() {
         pauseTimer()
-
-        // Save workout data to history
         viewModelScope.launch(Dispatchers.IO) {
             currentPlanId?.let { planId ->
                 workoutHistoryRepository.recordWorkout(
-                    dayId = planId, // Using planId here, but in a real app would use the dayId
+                    dayId = planId,
                     exercisesCompleted = exercisesCompleted,
                     durationSeconds = _elapsedTime.value
                 )
             }
         }
-
-        // Reset states
         _elapsedTime.value = 0
         _currentExercises.value = emptyList()
         exercisesCompleted = 0

@@ -1,10 +1,10 @@
 package com.example.trainingapp.screens.workout
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
@@ -23,6 +23,8 @@ import com.example.trainingapp.ui.theme.SportRed
 import com.example.trainingapp.ui.theme.TextMedium
 import com.example.trainingapp.viewmodels.WorkoutPlanViewModel
 
+private const val TAG = "CreatePlanScreen"
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreatePlanScreen(
@@ -31,13 +33,25 @@ fun CreatePlanScreen(
 ) {
     val planName by viewModel.planName.collectAsState()
     val daysPerWeek by viewModel.daysPerWeek.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+    val errorMessage by viewModel.errorMessage.collectAsState()
+
+    Log.d(TAG, "CreatePlanScreen composable called")
+    LaunchedEffect(errorMessage) {
+        errorMessage?.let {
+            Log.e(TAG, "Error in CreatePlanScreen: $it")
+        }
+    }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Create Workout Plan") },
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
+                    IconButton(onClick = {
+                        Log.d(TAG, "Navigate back from CreatePlanScreen")
+                        navController.popBackStack()
+                    }) {
                         Icon(Icons.Rounded.ArrowBack, contentDescription = "Back")
                     }
                 }
@@ -46,54 +60,89 @@ fun CreatePlanScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
-                    viewModel.createPlan()
-                    navController.popBackStack()
+                    if (!isLoading) {
+                        Log.d(TAG, "Creating plan with name: $planName and days: $daysPerWeek")
+                        viewModel.createPlan()
+                        navController.popBackStack()
+                    }
                 },
                 containerColor = SportRed
             ) {
-                Icon(Icons.Rounded.Check, contentDescription = "Save Plan")
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        color = Color.White,
+                        strokeWidth = 2.dp,
+                        modifier = Modifier.size(24.dp)
+                    )
+                } else {
+                    Icon(Icons.Rounded.Check, contentDescription = "Save Plan")
+                }
             }
         }
     ) { paddingValues ->
-        Column(
+        Box(
             modifier = Modifier
                 .padding(paddingValues)
                 .fillMaxSize()
                 .background(BackgroundColor)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Plan name input
-            OutlinedTextField(
-                value = planName,
-                onValueChange = { viewModel.setPlanName(it) },
-                label = { Text("Plan Name") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true
-            )
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.align(Alignment.Center),
+                    color = SportRed
+                )
+            }
 
-            // Days per week selection
-            Text(
-                text = "DAYS PER WEEK",
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold,
-                color = TextMedium,
-                letterSpacing = 1.sp,
-                modifier = Modifier.padding(top = 8.dp, bottom = 8.dp)
-            )
-
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.weight(1f)
+            errorMessage?.let {
+                Snackbar(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(16.dp)
+                ) {
+                    Text(it)
+                }
+            }
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                items((1..7).toList()) { day ->
-                    DaySelectionItem(
-                        day = day,
-                        isSelected = day <= daysPerWeek,
-                        onSelect = { selected ->
-                            viewModel.setDaysPerWeek(if (selected) day else day - 1)
+                OutlinedTextField(
+                    value = planName,
+                    onValueChange = {
+                        if (!isLoading) {
+                            viewModel.setPlanName(it)
                         }
-                    )
+                    },
+                    label = { Text("Plan Name") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+                Text(
+                    text = "DAYS PER WEEK",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = TextMedium,
+                    letterSpacing = 1.sp,
+                    modifier = Modifier.padding(top = 8.dp, bottom = 8.dp)
+                )
+
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    items((1..7).toList()) { day ->
+                        DaySelectionItem(
+                            day = day,
+                            isSelected = day <= daysPerWeek,
+                            onSelect = { selected ->
+                                if (!isLoading) {
+                                    viewModel.setDaysPerWeek(if (selected) day else day - 1)
+                                }
+                            }
+                        )
+                    }
                 }
             }
         }

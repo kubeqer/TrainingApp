@@ -12,8 +12,14 @@ interface WorkoutPlanDao {
     @Query("SELECT * FROM workout_plans")
     fun getAllWorkoutPlans(): LiveData<List<WorkoutPlan>>
 
+    @Query("SELECT * FROM workout_plans")
+    suspend fun getAllWorkoutPlansImmediate(): List<WorkoutPlan>
+
     @Query("SELECT * FROM workout_plans WHERE plan_id = :planId")
     fun getWorkoutPlanById(planId: Long): LiveData<WorkoutPlan?>
+
+    @Query("SELECT * FROM workout_plans WHERE plan_id = :planId")
+    suspend fun getWorkoutPlanByIdImmediate(planId: Long): WorkoutPlan?
 
     @Query("SELECT * FROM workout_plans WHERE is_active = 1")
     fun getActiveWorkoutPlans(): LiveData<List<WorkoutPlan>>

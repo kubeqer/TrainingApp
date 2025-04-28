@@ -69,7 +69,6 @@ fun ProgressOverviewTab(
         }
 
         item {
-            // Weekly workout chart placeholder
             Card(
                 modifier = Modifier
                     .fillMaxWidth()

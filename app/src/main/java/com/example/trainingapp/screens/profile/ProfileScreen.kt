@@ -46,7 +46,6 @@ fun ProfileScreen(
     var editedHeight by remember { mutableStateOf(height.toString()) }
     var editedGoal by remember { mutableStateOf(fitnessGoal) }
 
-    // Update local state when view model values change
     LaunchedEffect(userName, weight, height, fitnessGoal) {
         editedName = userName
         editedWeight = weight.toString()
@@ -71,7 +70,6 @@ fun ProfileScreen(
                     IconButton(
                         onClick = {
                             if (isEditMode) {
-                                // Save changes
                                 viewModel.updateUserName(editedName)
                                 viewModel.updateWeight(editedWeight.toFloatOrNull() ?: weight)
                                 viewModel.updateHeight(editedHeight.toIntOrNull() ?: height)
@@ -99,7 +97,6 @@ fun ProfileScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Profile header
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp)
@@ -110,7 +107,6 @@ fun ProfileScreen(
                         .padding(16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // Profile picture placeholder
                     Box(
                         modifier = Modifier
                             .size(100.dp)
@@ -145,8 +141,6 @@ fun ProfileScreen(
                     }
                 }
             }
-
-            // Body measurements
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp)
@@ -207,8 +201,6 @@ fun ProfileScreen(
                     }
                 }
             }
-
-            // Fitness goals
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp)
@@ -246,51 +238,6 @@ fun ProfileScreen(
                         Text(
                             text = fitnessGoal,
                             fontSize = 16.sp
-                        )
-                    }
-                }
-            }
-
-            // Settings
-            if (!isEditMode) {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp)
-                    ) {
-                        Text(
-                            text = "Settings",
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(bottom = 8.dp)
-                        )
-
-                        SettingsItem(
-                            icon = Icons.Rounded.Notifications,
-                            label = "Notifications",
-                            onClick = { /* Open notifications settings */ }
-                        )
-
-                        SettingsItem(
-                            icon = Icons.Rounded.Lock,
-                            label = "Privacy",
-                            onClick = { /* Open privacy settings */ }
-                        )
-
-                        SettingsItem(
-                            icon = Icons.Rounded.Help,
-                            label = "Help & Support",
-                            onClick = { /* Open help */ }
-                        )
-
-                        SettingsItem(
-                            icon = Icons.Rounded.Info,
-                            label = "About",
-                            onClick = { /* Open about */ }
                         )
                     }
                 }

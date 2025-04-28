@@ -30,7 +30,6 @@ fun ExerciseDetailScreen(
     navController: NavController,
     viewModel: ExerciseViewModel = viewModel()
 ) {
-    // Load the exercise details
     LaunchedEffect(exerciseId) {
         viewModel.getExerciseById(exerciseId)
     }
@@ -59,7 +58,6 @@ fun ExerciseDetailScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             exercise?.let { ex ->
-                // Exercise image placeholder
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -70,20 +68,14 @@ fun ExerciseDetailScreen(
                 ) {
                     Text("Exercise Demonstration", color = Color.White)
                 }
-
-                // Exercise details
                 ExerciseDetailCard(
                     title = "Description",
                     content = ex.description
                 )
-
-                // Target muscles
                 ExerciseDetailCard(
                     title = "Target Muscles",
                     content = "Primary: ${viewModel.getBodyPartName(ex.bodyPartId)}"
                 )
-
-                // Suggested sets/reps
                 ExerciseDetailCard(
                     title = "Suggested Training",
                     content = """
@@ -92,8 +84,6 @@ fun ExerciseDetailScreen(
                         Advanced: 5 sets of 12-15 reps
                     """.trimIndent()
                 )
-
-                // Add to workout button
                 Button(
                     onClick = { /* TODO: Implement add to workout */ },
                     modifier = Modifier.fillMaxWidth(),
@@ -106,7 +96,6 @@ fun ExerciseDetailScreen(
                     )
                 }
             } ?: run {
-                // Show loading state
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center

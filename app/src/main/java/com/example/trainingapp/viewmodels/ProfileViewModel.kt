@@ -1,14 +1,19 @@
 package com.example.trainingapp.viewmodels
 
 import android.app.Application
+import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.trainingapp.TrainingApp
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 class ProfileViewModel(application: Application) : AndroidViewModel(application) {
-    private val _userName = MutableStateFlow("User")
+    private val app = application as TrainingApp
+    private val sharedPreferences = app.getSharedPreferences("user_profile", Context.MODE_PRIVATE)
+
+    private val _userName = MutableStateFlow("")
     val userName: StateFlow<String> = _userName
 
     private val _weight = MutableStateFlow(70.0f)
@@ -23,14 +28,15 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
     private val _isEditMode = MutableStateFlow(false)
     val isEditMode: StateFlow<Boolean> = _isEditMode
 
-    // In a real app, these would be loaded from preferences or a user database
     init {
         loadUserData()
     }
 
     private fun loadUserData() {
-        // Simulate loading from database or preferences
-        // In a real app, this would be an async operation
+        _userName.value = sharedPreferences.getString("user_name", "User") ?: "User"
+        _weight.value = sharedPreferences.getFloat("weight", 70.0f)
+        _height.value = sharedPreferences.getInt("height", 175)
+        _fitnessGoal.value = sharedPreferences.getString("fitness_goal", "Build Muscle") ?: "Build Muscle"
     }
 
     fun updateUserName(name: String) {
@@ -69,10 +75,14 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun saveUserData() {
-        // In a real app, this would save to a database or preferences
         viewModelScope.launch {
-            // Simulate network or database operation
-            // Then exit edit mode when complete
+            with(sharedPreferences.edit()) {
+                putString("user_name", _userName.value)
+                putFloat("weight", _weight.value)
+                putInt("height", _height.value)
+                putString("fitness_goal", _fitnessGoal.value)
+                apply()
+            }
             _isEditMode.value = false
         }
     }

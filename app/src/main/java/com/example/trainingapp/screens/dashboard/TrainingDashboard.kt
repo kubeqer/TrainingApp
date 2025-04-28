@@ -1,5 +1,6 @@
 package com.example.trainingapp.screens.dashboard
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
@@ -8,7 +9,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.CalendarToday
 import androidx.compose.material.icons.rounded.Create
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -28,14 +28,17 @@ import com.example.trainingapp.ui.theme.BackgroundColor
 import com.example.trainingapp.ui.theme.SportRed
 import com.example.trainingapp.ui.theme.TextMedium
 
+private const val TAG = "TrainingDashboard"
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TrainingDashboard(
     navController: NavController,
     mainViewModel: MainViewModel = viewModel()
 ) {
-    // Fetch body parts from repository using ViewModel
     val bodyParts by mainViewModel.bodyParts.collectAsState()
+
+    Log.d(TAG, "TrainingDashboard composable called with ${bodyParts.size} body parts")
 
     Scaffold(
         topBar = {
@@ -62,7 +65,6 @@ fun TrainingDashboard(
                 .background(BackgroundColor),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            // Body parts categories (horizontal scroll)
             Column(
                 modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 8.dp)
             ) {
@@ -75,22 +77,36 @@ fun TrainingDashboard(
                     modifier = Modifier.padding(bottom = 12.dp, start = 4.dp)
                 )
 
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    contentPadding = PaddingValues(end = 16.dp, bottom = 8.dp)
-                ) {
-                    items(bodyParts) { bodyPart ->
-                        BodyPartButton(
-                            bodyPart = bodyPart,
-                            onClick = {
-                                navController.navigate("exercises/${bodyPart.id}")
-                            }
-                        )
+                if (bodyParts.isEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(100.dp),
+                        contentAlignment = androidx.compose.ui.Alignment.Center
+                    ) {
+                        CircularProgressIndicator(color = SportRed)
+                    }
+                } else {
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        contentPadding = PaddingValues(end = 16.dp, bottom = 8.dp)
+                    ) {
+                        items(bodyParts) { bodyPart ->
+                            BodyPartButton(
+                                bodyPart = bodyPart,
+                                onClick = {
+                                    try {
+                                        Log.d(TAG, "Navigating to exercises for body part: ${bodyPart.id}")
+                                        navController.navigate("exercises/${bodyPart.id}")
+                                    } catch (e: Exception) {
+                                        Log.e(TAG, "Navigation error", e)
+                                    }
+                                }
+                            )
+                        }
                     }
                 }
             }
-
-            // Workout actions section
             Column(
                 modifier = Modifier.padding(horizontal = 16.dp)
             ) {
@@ -114,7 +130,12 @@ fun TrainingDashboard(
                         icon = Icons.Rounded.Create,
                         modifier = Modifier.weight(1f),
                         onClick = {
-                            navController.navigate(AppDestinations.CREATE_PLAN)
+                            try {
+                                Log.d(TAG, "Navigating to create plan")
+                                navController.navigate(AppDestinations.CREATE_PLAN)
+                            } catch (e: Exception) {
+                                Log.e(TAG, "Navigation error", e)
+                            }
                         }
                     )
 
@@ -123,15 +144,17 @@ fun TrainingDashboard(
                         icon = Icons.Rounded.Add,
                         modifier = Modifier.weight(1f),
                         onClick = {
-                            // Navigate to add exercise screen
-                            // For now, just go to exercise list with all exercises (body part id 0)
-                            navController.navigate("exercises/0")
+                            try {
+                                Log.d(TAG, "Navigating to exercises/0")
+                                navController.navigate("exercises/0")
+                            } catch (e: Exception) {
+                                Log.e(TAG, "Navigation error", e)
+                            }
                         }
                     )
                 }
             }
 
-            // Schedule management
             Column(
                 modifier = Modifier.padding(horizontal = 16.dp)
             ) {
@@ -146,16 +169,24 @@ fun TrainingDashboard(
 
                 ScheduleCard(
                     onClick = {
-                        navController.navigate(AppDestinations.CALENDAR)
+                        try {
+                            Log.d(TAG, "Navigating to calendar")
+                            navController.navigate(AppDestinations.CALENDAR)
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Navigation error", e)
+                        }
                     }
                 )
             }
 
-            // Today's workout
             TodaysWorkoutCard(
                 onClick = {
-                    // For demo, navigate to a workout session with plan ID 1
-                    navController.navigate("workout_session/1")
+                    try {
+                        Log.d(TAG, "Navigating to workout session")
+                        navController.navigate("workout_session/1")
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Navigation error", e)
+                    }
                 },
                 modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 24.dp)
             )

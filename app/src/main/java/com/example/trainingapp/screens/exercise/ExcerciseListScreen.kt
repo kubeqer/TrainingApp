@@ -28,7 +28,6 @@ fun ExerciseListScreen(
     navController: NavController,
     viewModel: ExerciseViewModel = viewModel()
 ) {
-    // Load exercises for the selected body part
     LaunchedEffect(bodyPartId) {
         viewModel.loadExercisesByBodyPart(bodyPartId)
     }
@@ -57,7 +56,6 @@ fun ExerciseListScreen(
                 .fillMaxSize()
                 .background(BackgroundColor)
         ) {
-            // Search bar
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { viewModel.setSearchQuery(it) },
@@ -70,7 +68,6 @@ fun ExerciseListScreen(
             )
 
             if (exercises.isEmpty()) {
-                // Empty state
                 Box(
                     modifier = Modifier
                         .fillMaxSize()

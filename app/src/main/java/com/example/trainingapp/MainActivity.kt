@@ -9,18 +9,13 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.rememberNavController
-import com.example.trainingapp.data.database.WorkoutDatabase
 import com.example.trainingapp.navigation.AppNavigation
 import com.example.trainingapp.ui.theme.TrainingAppTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        val database = WorkoutDatabase.getDatabase(applicationContext, lifecycleScope)
-
         setContent {
             TrainingAppTheme {
                 val navController = rememberNavController()
