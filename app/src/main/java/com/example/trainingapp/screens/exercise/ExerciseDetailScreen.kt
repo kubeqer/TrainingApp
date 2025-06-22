@@ -115,17 +115,6 @@ fun ExerciseDetailScreen(
             Advanced: 5 sets of 12-15 reps
         """.trimIndent()
                 )
-                Button(
-                    onClick = { /* TODO: Implement add to workout */ },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(8.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = SportRed)
-                ) {
-                    Text(
-                        text = "Add to Workout",
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    )
-                }
             } ?: run {
                 Box(
                     modifier = Modifier.fillMaxSize(),

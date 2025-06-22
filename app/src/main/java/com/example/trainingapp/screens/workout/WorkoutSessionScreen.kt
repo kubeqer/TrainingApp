@@ -1,170 +1,124 @@
 package com.example.trainingapp.screens.workout
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AddCircle
-import androidx.compose.material.icons.rounded.*
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.example.trainingapp.screens.workout.components.WorkoutExerciseCard
-import com.example.trainingapp.ui.theme.BackgroundColor
-import com.example.trainingapp.ui.theme.SportRed
-import com.example.trainingapp.viewmodels.WorkoutSessionViewModel
-import com.example.trainingapp.viewmodels.formatTime
+import com.example.trainingapp.navigation.AppDestinations
+import com.example.trainingapp.screens.calendar.components.WeekView
+import com.example.trainingapp.viewmodels.CalendarViewModel
+import com.example.trainingapp.viewmodels.ExerciseViewModel
+import java.util.Calendar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WorkoutSessionScreen(
     planId: Long,
     navController: NavController,
-    viewModel: WorkoutSessionViewModel = viewModel()
+    calendarVm: CalendarViewModel = viewModel(),
+    exerciseVm: ExerciseViewModel = viewModel()
 ) {
-    val exercises by viewModel.currentExercises.collectAsState()
-    val elapsedTime by viewModel.elapsedTime.collectAsState()
-    val isTimerRunning by viewModel.isTimerRunning.collectAsState()
-
+    // Ensure plan is active before loading
     LaunchedEffect(planId) {
-        viewModel.startWorkout(planId)
+        calendarVm.activatePlan(planId)
     }
 
-    DisposableEffect(Unit) {
-        onDispose {
-            viewModel.pauseTimer()
-        }
+    // Collect workout days and exercise map from calendar VM
+    val workoutDays by calendarVm.workoutDays.collectAsStateWithLifecycle()
+    val exerciseMap by calendarVm.exerciseMap.collectAsStateWithLifecycle()
+
+    // Build current week schedule whenever underlying data changes
+    val weekSchedule by remember(workoutDays, exerciseMap) {
+        derivedStateOf { calendarVm.getCurrentWeekSchedule() }
     }
+
+    // Collect full exercise list
+    val allExercises by exerciseVm.exercises.collectAsStateWithLifecycle()
+
+    // Track completed state per exercise
+    val completedState = remember { mutableStateMapOf<Long, Boolean>() }
+
+    // Determine today's entries
+    val today = Calendar.getInstance().time
+    val todayEntry = weekSchedule.firstOrNull { ds ->
+        val c1 = Calendar.getInstance().apply { time = ds.date }
+        val c2 = Calendar.getInstance().apply { time = today }
+        c1.get(Calendar.YEAR) == c2.get(Calendar.YEAR) &&
+                c1.get(Calendar.DAY_OF_YEAR) == c2.get(Calendar.DAY_OF_YEAR)
+    }
+    val todayIds = todayEntry?.exerciseIds.orEmpty()
+    val todayExercises = allExercises.filter { it.id in todayIds }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Workout in Progress") },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Rounded.ArrowBack, contentDescription = "Back")
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { viewModel.toggleTimer() }) {
-                        Icon(
-                            if (isTimerRunning) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
-                            contentDescription = if (isTimerRunning) "Pause" else "Resume"
-                        )
-                    }
-                }
+                title = { Text("Workout Session") }
             )
-        },
-        bottomBar = {
-            BottomAppBar(
-                containerColor = SportRed,
-                contentColor = Color.White
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Time: ${formatTime(elapsedTime)}",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp
-                    )
-
-                    Button(
-                        onClick = {
-                            viewModel.completeWorkout()
-                            navController.popBackStack()
-                        },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color.White,
-                            contentColor = SportRed
-                        )
-                    ) {
-                        Text("Finish Workout")
-                    }
-                }
-            }
         }
-    ) { paddingValues ->
-        if (exercises.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .background(BackgroundColor),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center,
-                    modifier = Modifier.padding(16.dp)
-                ) {
-                    Text(
-                        text = "No exercises planned for today",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "Add exercises to your workout or choose a rest day",
-                        color = Color.Gray,
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                    )
-                    Spacer(modifier = Modifier.height(24.dp))
-                    Button(
-                        onClick = { /* Add exercise */ },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = SportRed
-                        )
-                    ) {
-                        Icon(Icons.Filled.AddCircle, contentDescription = null)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Add Exercise")
-                    }
-                }
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .padding(paddingValues)
-                    .fillMaxSize()
-                    .background(BackgroundColor)
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                items(exercises) { exerciseWithSets ->
-                    WorkoutExerciseCard(
-                        exerciseName = exerciseWithSets.exercise.name,
-                        sets = exerciseWithSets.sets,
-                        onSetComplete = { setIndex, reps, weight ->
-                            viewModel.recordSet(exerciseWithSets.exercise.id, setIndex, reps, weight)
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .padding(padding)
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            if (todayExercises.isEmpty()) {
+                Text("No exercises scheduled for today.")
+            } else {
+                LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(todayExercises) { exercise ->
+                        // initialize default state
+                        val checked = completedState.getOrPut(exercise.id) { false }
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = MaterialTheme.shapes.medium,
+                            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                            colors = CardDefaults.cardColors()
+                        ) {
+                            Row(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Checkbox(
+                                    checked = checked,
+                                    onCheckedChange = { completedState[exercise.id] = it },
+                                    modifier = Modifier.padding(end = 16.dp)
+                                )
+                                Text(
+                                    text = exercise.name,
+                                    style = MaterialTheme.typography.bodyLarge.copy(
+                                        textDecoration = if (checked) TextDecoration.LineThrough else TextDecoration.None
+                                    ),
+                                    modifier = Modifier.weight(1f)
+                                )
+                                IconButton(
+                                    onClick = {
+                                        navController.navigate(
+                                            AppDestinations.EXERCISE_DETAIL
+                                                .replace("{exerciseId}", exercise.id.toString())
+                                        )
+                                    }
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Filled.MoreVert,
+                                        contentDescription = "Details"
+                                    )
+                                }
+                            }
                         }
-                    )
-                }
-
-                item {
-                    Button(
-                        onClick = { /* Add exercise */ },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = SportRed.copy(alpha = 0.1f),
-                            contentColor = SportRed
-                        )
-                    ) {
-                        Icon(Icons.Filled.AddCircle, contentDescription = null)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Add Exercise")
                     }
                 }
             }

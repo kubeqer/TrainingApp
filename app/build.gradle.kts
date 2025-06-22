@@ -49,6 +49,7 @@ dependencies {
     implementation("androidx.compose.runtime:runtime-livedata")
     implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.6.1")
     implementation("com.google.code.gson:gson:2.10.1")
+    implementation ("io.coil-kt:coil-compose:2.4.0")
     implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)

@@ -47,17 +47,6 @@ class MainActivity : ComponentActivity() {
                                 label = { Text("Calendar") }
                             )
                             NavigationBarItem(
-                                selected = selectedRoute == "progress",
-                                onClick = {
-                                    selectedRoute = "progress"
-                                    navController.navigate("progress") {
-                                        popUpTo("home")
-                                    }
-                                },
-                                icon = { Icon(Icons.Filled.BarChart, contentDescription = "Progress") },
-                                label = { Text("Progress") }
-                            )
-                            NavigationBarItem(
                                 selected = selectedRoute == "profile",
                                 onClick = {
                                     selectedRoute = "profile"
@@ -67,6 +56,15 @@ class MainActivity : ComponentActivity() {
                                 },
                                 icon = { Icon(Icons.Filled.Person, contentDescription = "Profile") },
                                 label = { Text("Profile") }
+                            )
+                            NavigationBarItem(
+                                selected = selectedRoute == "gallery",
+                                onClick = {
+                                    selectedRoute = "gallery"
+                                    navController.navigate("gallery") { popUpTo("home") }
+                                    },
+                                icon = { Icon(Icons.Filled.PhotoLibrary, contentDescription = "Gallery") },
+                                label = { Text("Gallery") }
                             )
                         }
                     }
