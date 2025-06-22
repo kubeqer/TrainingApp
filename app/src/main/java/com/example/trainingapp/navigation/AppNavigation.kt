@@ -188,7 +188,7 @@ fun AppNavigation(
         }
 
         composable(route = AppDestinations.GALLERY) {
-            // lista przykładowych URL-i ― tu możesz wczytać z API albo z ViewModelu
+
             val sampleImages = listOf(
                 "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ9VDAU5wKFTrI0EuIguwochhXrzU1NyYODKQ&s",
                 "https://www.oxcloth.com/cdn/shop/articles/ab8622774dfd8bc6b2107656cc1d648ff48279b3-1200x600.webp?v=1712077173",
@@ -205,7 +205,7 @@ fun AppNavigation(
             GalleryScreen(
                 imageUrls = sampleImages,
                 onImageClick = { imageUrl ->
-                    // np. możesz nawigować do szczegółów
+
                     navController.navigate("imageDetail/${Uri.encode(imageUrl)}")
                 }
             )

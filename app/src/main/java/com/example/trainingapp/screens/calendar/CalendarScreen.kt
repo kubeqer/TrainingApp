@@ -39,27 +39,23 @@ fun CalendarScreen(
     navController: NavController,
     calendarVm: CalendarViewModel = viewModel()
 ) {
-    // Inject PlanViewModel internally
+
     val app = LocalContext.current.applicationContext as TrainingApp
     val planRepo = remember { PlanRepository(app.database.planDao(), app.database.planExerciseDao()) }
     val planVm: PlanViewModel = viewModel(factory = PlanViewModelFactory(planRepo))
 
-    // Sync active plan change
     LaunchedEffect(planVm.activePlanId) {
         planVm.activePlanId?.takeIf { it > 0L }?.let { calendarVm.activatePlan(it) }
     }
 
-    // Collect state
     val activePlan by calendarVm.activePlan.collectAsStateWithLifecycle()
     val workoutDays by calendarVm.workoutDays.collectAsStateWithLifecycle()
     val exerciseMap by calendarVm.exerciseMap.collectAsStateWithLifecycle()
 
-    // Week schedule
     val weekSchedule by remember(workoutDays, exerciseMap) {
         derivedStateOf { calendarVm.getCurrentWeekSchedule() }
     }
 
-    // Today
     val today = remember { Calendar.getInstance().time }
     val monthFmt = remember { SimpleDateFormat("MMMM yyyy", Locale.getDefault()) }
 
@@ -83,17 +79,15 @@ fun CalendarScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Month
+
             Text(
                 text = monthFmt.format(today),
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold
             )
 
-            // Week strip
             WeekView(weekSchedule = weekSchedule, today = today)
 
-            // Active Plan
             Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
                 Column(Modifier.padding(16.dp)) {
                     Text("Active Plan", fontSize = 18.sp, fontWeight = FontWeight.Bold)
@@ -121,7 +115,6 @@ fun CalendarScreen(
                 }
             }
 
-            // Today's Training
             Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
                 Column(Modifier.padding(16.dp)) {
                     Text("Today's Training", fontSize = 18.sp, fontWeight = FontWeight.Bold)
@@ -131,7 +124,7 @@ fun CalendarScreen(
                     val exercisesToday = entry?.exerciseIds.orEmpty()
 
                     if (entry != null && exercisesToday.isNotEmpty()) {
-                        // safe day name
+
                         val dayName = entry.workoutDay?.dayName ?: dowName(weekday(today))
                         val count = exercisesToday.size
                         val estimate = count * 10
@@ -167,7 +160,6 @@ fun CalendarScreen(
                 }
             }
 
-            // Upcoming Workouts
             Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
                 Column(Modifier.padding(16.dp)) {
                     Text("Upcoming Workouts", fontSize = 18.sp, fontWeight = FontWeight.Bold)
@@ -205,7 +197,6 @@ fun CalendarScreen(
     }
 }
 
-// Helpers
 fun isSameDay(d1: Date, d2: Date): Boolean {
     val c1 = Calendar.getInstance().apply { time = d1 }
     val c2 = Calendar.getInstance().apply { time = d2 }

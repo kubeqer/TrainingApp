@@ -35,18 +35,15 @@ fun SelectExercisesScreen(
     day: Int,
     onSave: () -> Unit
 ) {
-    // 1) bodyParts z ExerciseViewModel (do filtra)
+
     val exerciseViewModel: ExerciseViewModel = viewModel()
     val bodyParts by exerciseViewModel.bodyParts.collectAsState()
 
-    // lista partii z "All"
     val bodyPartsList = listOf(0L to "All") +
             bodyParts.entries.map { it.key to it.value }
 
-    // stan zaznaczonej partii
     var selectedPart by remember { mutableStateOf(0L) }
 
-    // dni do wyświetlenia (posortowane)
     val daysSorted = planViewModel.selectedDays.sorted()
 
     LazyColumn(
@@ -54,7 +51,7 @@ fun SelectExercisesScreen(
         contentPadding = PaddingValues(vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // ─── Filtr partii mięśni ───
+
         item {
             val rowState = rememberLazyListState()
             Box(
@@ -106,9 +103,8 @@ fun SelectExercisesScreen(
             }
         }
 
-        // ─── Ćwiczenia wg kolejnych dni ───
         daysSorted.forEach { d ->
-            // Nagłówek dnia
+
             item {
                 val label = listOf(
                     "", "Monday", "Tuesday", "Wednesday",
@@ -123,7 +119,6 @@ fun SelectExercisesScreen(
                 )
             }
 
-            // Lista ćwiczeń dla dnia d
             item {
                 val filtered = allExercises.filter {
                     selectedPart == 0L || it.bodyPartId == selectedPart
@@ -132,26 +127,26 @@ fun SelectExercisesScreen(
                 Box(
                     Modifier
                         .fillMaxWidth()
-                        // pokaż ok. 3 wiersze
+
                         .height(56.dp * 3)
                 ) {
                     Column(Modifier.verticalScroll(vScroll)) {
                         filtered.forEach { ex ->
-                            // stan zaznaczeń z ViewModelu
+
                             val selList = planViewModel.exercisesByDay[d] ?: emptyList()
                             val checked = ex.id in selList
 
                             Row(
                                 Modifier
                                     .fillMaxWidth()
-                                    .clickable { /* opcjonalnie: więcej akcji */ }
+                                    .clickable {  }
                                     .padding(horizontal = 16.dp, vertical = 8.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Checkbox(
                                     checked = checked,
                                     onCheckedChange = {
-                                        // toggle w ViewModelu
+
                                         planViewModel.toggleExercise(d, ex.id)
                                     }
                                 )
@@ -166,7 +161,7 @@ fun SelectExercisesScreen(
                             Divider()
                         }
                     }
-                    // strzałka dół, jeśli jest scroll
+
                     if (vScroll.value < vScroll.maxValue) {
                         Icon(
                             imageVector = Icons.Filled.ArrowDownward,
@@ -181,11 +176,10 @@ fun SelectExercisesScreen(
             }
         }
 
-        // ─── Przycisk Save ───
         item {
             Button(
                 onClick = onSave,
-                // aktywny, gdy co najmniej jedno ćwiczenie wybrane
+
                 enabled = planViewModel.exercisesByDay.values.any { it.isNotEmpty() },
                 modifier = Modifier
                     .fillMaxWidth()

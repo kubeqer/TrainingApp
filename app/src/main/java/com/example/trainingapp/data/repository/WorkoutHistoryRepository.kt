@@ -1,4 +1,4 @@
-// WorkoutHistoryRepository.kt
+
 package com.example.trainingapp.data.repository
 
 import com.example.trainingapp.data.dao.DayExerciseDao
@@ -16,7 +16,6 @@ class WorkoutHistoryRepository(
     private val _recentWorkouts = MutableStateFlow<List<WorkoutSummary>>(emptyList())
     val recentWorkouts: Flow<List<WorkoutSummary>> = _recentWorkouts
 
-    // Mock data for demo
     private var weeklyWorkoutCount = 0
     private var totalExercisesCompleted = 0
     private var totalWorkoutTimeSeconds = 0L
@@ -46,7 +45,6 @@ class WorkoutHistoryRepository(
         totalExercisesCompleted += exercisesCompleted
         totalWorkoutTimeSeconds += durationSeconds
 
-        // Add to recent workouts
         val calendar = Calendar.getInstance()
         val dateFormat = SimpleDateFormat("MMM d, yyyy", Locale.getDefault())
 

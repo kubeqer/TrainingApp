@@ -116,10 +116,9 @@ class ExerciseViewModel(application: Application) : AndroidViewModel(application
 
     }
     fun forcePopulate() {
-        // 1) Populacja bazy we własnym scope ViewModelu
+
         DatabaseInitializer.populateDatabase(database, viewModelScope)
 
-        // 2) Po chwili (asynchronicznie) sprawdź
         viewModelScope.launch(Dispatchers.IO) {
             val liveData = database.exerciseDao().getAllExercises()
             withContext(Dispatchers.Main) {

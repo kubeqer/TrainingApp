@@ -8,7 +8,7 @@ import com.example.trainingapp.data.entity.PlanExerciseCrossRef
 
 @Dao
 interface PlanExerciseCrossRefDao {
-    // 1) Pobranie pogrupowanych po dniu referencji
+
     @Query("""
     SELECT day_of_week        AS `key`,
            GROUP_CONCAT(exercise_id, ',') AS concatenated
@@ -21,7 +21,6 @@ interface PlanExerciseCrossRefDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(refs: List<PlanExerciseCrossRef>)
 
-    // 2) Usunięcie wszystkich przypisań dla danego planu
     @Query("DELETE FROM plan_exercise_cross_ref WHERE plan_id = :planId")
     suspend fun deleteForPlan(planId: Long)
 

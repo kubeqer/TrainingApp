@@ -13,7 +13,6 @@ object DateUtil {
         val calendar = Calendar.getInstance()
         calendar.firstDayOfWeek = Calendar.MONDAY
 
-        // Go to the beginning of the current week (Monday)
         while (calendar.get(Calendar.DAY_OF_WEEK) != Calendar.MONDAY) {
             calendar.add(Calendar.DAY_OF_YEAR, -1)
         }
@@ -38,7 +37,7 @@ object DateUtil {
     fun getDayOfWeek(date: Date): Int {
         val calendar = Calendar.getInstance().apply { time = date }
         val dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK)
-        // Convert to 1-7 where 1 is Monday
+
         return if (dayOfWeek == Calendar.SUNDAY) 7 else dayOfWeek - 1
     }
 }

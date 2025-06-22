@@ -65,12 +65,12 @@ fun ExerciseDetailScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             exercise?.let { ex ->
-                // 1️⃣ Wyciągamy ID filmu z URL (parametr v)
+
                 val videoId = remember(ex.youtube_url) {
                     Uri.parse(ex.youtube_url).getQueryParameter("v")
                         ?: ex.youtube_url.substringAfterLast("/")
                 }
-                // 2️⃣ Osadzamy WebView z iframe YouTube
+
                 AndroidView(
                     factory = { ctx ->
                         WebView(ctx).apply {

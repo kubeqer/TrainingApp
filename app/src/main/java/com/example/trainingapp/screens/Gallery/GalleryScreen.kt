@@ -1,4 +1,4 @@
-// GalleryScreen.kt
+
 package com.example.trainingapp.screens.gallery
 
 import androidx.compose.foundation.ExperimentalFoundationApi

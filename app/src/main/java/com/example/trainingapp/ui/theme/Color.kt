@@ -10,7 +10,6 @@ val Purple40 = Color(0xFF6650a4)
 val PurpleGrey40 = Color(0xFF625b71)
 val Pink40 = Color(0xFF7D5260)
 
-// Sport colors for FitStrong app
 val SportRed = Color(0xFFE53935)
 val SportRedLight = Color(0xFFFF6F60)
 val SportRedDark = Color(0xFFAB000D)

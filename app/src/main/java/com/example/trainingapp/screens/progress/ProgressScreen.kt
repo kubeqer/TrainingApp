@@ -49,7 +49,7 @@ fun ProgressScreen(
                 .fillMaxSize()
                 .background(BackgroundColor)
         ) {
-            // Tab row
+
             TabRow(
                 selectedTabIndex = selectedTab,
                 containerColor = Color.White,
@@ -73,7 +73,7 @@ fun ProgressScreen(
                 1 -> WorkoutHistoryTab(
                     recentWorkouts = recentWorkouts,
                     onWorkoutClick = { workoutId ->
-                        // In a real app, navigate to workout details
+
                     }
                 )
                 2 -> StatsTab()

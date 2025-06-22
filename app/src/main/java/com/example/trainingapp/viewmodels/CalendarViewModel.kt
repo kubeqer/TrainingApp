@@ -18,14 +18,10 @@ import kotlinx.coroutines.launch
 import java.util.Calendar
 import java.util.Date
 
-/**
- * ViewModel for the Calendar screen, exposing the active plan,
- * its workout days, and exercises per day.
- */
+
 class CalendarViewModel(application: Application) : AndroidViewModel(application) {
     private val tag = "CalendarViewModel"
 
-    // Application and repository setup
     private val app = application as TrainingApp
     private val workoutPlanRepo: WorkoutPlanRepository by lazy {
         WorkoutPlanRepository(
@@ -35,7 +31,6 @@ class CalendarViewModel(application: Application) : AndroidViewModel(application
     }
     private val crossRefDao: PlanExerciseCrossRefDao = app.database.planExerciseDao()
 
-    // --- StateFlows exposed to UI ---
     private val _activePlan = MutableStateFlow<WorkoutPlan?>(null)
     val activePlan: StateFlow<WorkoutPlan?> = _activePlan
 
@@ -45,7 +40,6 @@ class CalendarViewModel(application: Application) : AndroidViewModel(application
     private val _exerciseMap = MutableStateFlow<Map<Int, List<Long>>>(emptyMap())
     val exerciseMap: StateFlow<Map<Int, List<Long>>> = _exerciseMap
 
-    // LiveData observers for Room
     private var activePlansLD: LiveData<List<WorkoutPlan>>? = null
     private var workoutDaysLD: LiveData<List<WorkoutDay>>?   = null
 
@@ -70,27 +64,21 @@ class CalendarViewModel(application: Application) : AndroidViewModel(application
         attachActivePlanObserver()
     }
 
-    /**
-     * (Re)attach observer to active-workout-plans LiveData.
-     */
+    
     private fun attachActivePlanObserver() {
         activePlansLD?.removeObserver(activePlanObserver)
         activePlansLD = workoutPlanRepo.getActiveWorkoutPlans()
         activePlansLD?.observeForever(activePlanObserver)
     }
 
-    /**
-     * Observe workout days for a given plan.
-     */
+    
     private fun loadWorkoutDays(planId: Long) {
         workoutDaysLD?.removeObserver(workoutDaysObserver)
         workoutDaysLD = workoutPlanRepo.getWorkoutDaysByPlan(planId)
         workoutDaysLD?.observeForever(workoutDaysObserver)
     }
 
-    /**
-     * Load exercise-day cross references on IO thread.
-     */
+    
     private fun loadExerciseMap(planId: Long) {
         viewModelScope.launch(Dispatchers.IO) {
             val map = crossRefDao.getForPlan(planId)
@@ -98,9 +86,7 @@ class CalendarViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
-    /**
-     * Activate a plan: flip isActive flags and reattach observers.
-     */
+    
     fun activatePlan(planId: Long) {
         viewModelScope.launch(Dispatchers.IO) {
             workoutPlanRepo.activateWorkoutPlan(planId)
@@ -108,14 +94,12 @@ class CalendarViewModel(application: Application) : AndroidViewModel(application
         attachActivePlanObserver()
     }
 
-    /**
-     * Build a 7-day schedule (Mon→Sun) pairing WorkoutDay & exercise IDs.
-     */
+    
     fun getCurrentWeekSchedule(): List<DaySchedule> {
         val days = _workoutDays.value
         val exMap = _exerciseMap.value
         val cal = Calendar.getInstance().apply { firstDayOfWeek = Calendar.MONDAY }
-        // roll back to Monday
+
         val dowRaw = cal.get(Calendar.DAY_OF_WEEK)
         val shift = if (dowRaw == Calendar.SUNDAY) 6 else dowRaw - Calendar.MONDAY
         cal.add(Calendar.DATE, -shift)
@@ -129,9 +113,7 @@ class CalendarViewModel(application: Application) : AndroidViewModel(application
     }
 }
 
-/**
- * Data carrier for each day in the week strip.
- */
+
 data class DaySchedule(
     val date: Date,
     val workoutDay: WorkoutDay?,

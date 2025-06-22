@@ -18,7 +18,7 @@ class PlanRepository(
         crossRefDao.getForPlan(planId)
 
     suspend fun createOrUpdate(ui: WorkoutPlanModel) {
-        // zamień UI-model na encję
+
         val entity = WorkoutPlan(
             planId      = if (ui.id > 0) ui.id else 0L,
             planName    = ui.name,
@@ -26,14 +26,14 @@ class PlanRepository(
             dateCreated = System.currentTimeMillis(),
             isActive    = (ui.id > 0)
         )
-        // wstaw lub aktualizuj
+
         val newId = if (ui.id == 0L) {
             planDao.insertPlan(entity)
         } else {
             planDao.updatePlan(entity)
             ui.id
         }
-        // nadpisz cross-refy
+
         crossRefDao.deleteForPlan(newId)
         val refs = ui.exercisesByDay.flatMap { (day, list) ->
             list.map { exId ->
@@ -44,7 +44,7 @@ class PlanRepository(
     }
 
     suspend fun delete(ui: WorkoutPlanModel) {
-        // usuń plan i wszystkie refy
+
         planDao.deletePlan(
             WorkoutPlan(
                 planId      = ui.id,

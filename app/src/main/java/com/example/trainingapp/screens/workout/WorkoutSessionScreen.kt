@@ -28,27 +28,22 @@ fun WorkoutSessionScreen(
     calendarVm: CalendarViewModel = viewModel(),
     exerciseVm: ExerciseViewModel = viewModel()
 ) {
-    // Ensure plan is active before loading
+
     LaunchedEffect(planId) {
         calendarVm.activatePlan(planId)
     }
 
-    // Collect workout days and exercise map from calendar VM
     val workoutDays by calendarVm.workoutDays.collectAsStateWithLifecycle()
     val exerciseMap by calendarVm.exerciseMap.collectAsStateWithLifecycle()
 
-    // Build current week schedule whenever underlying data changes
     val weekSchedule by remember(workoutDays, exerciseMap) {
         derivedStateOf { calendarVm.getCurrentWeekSchedule() }
     }
 
-    // Collect full exercise list
     val allExercises by exerciseVm.exercises.collectAsStateWithLifecycle()
 
-    // Track completed state per exercise
     val completedState = remember { mutableStateMapOf<Long, Boolean>() }
 
-    // Determine today's entries
     val today = Calendar.getInstance().time
     val todayEntry = weekSchedule.firstOrNull { ds ->
         val c1 = Calendar.getInstance().apply { time = ds.date }
@@ -78,7 +73,7 @@ fun WorkoutSessionScreen(
             } else {
                 LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     items(todayExercises) { exercise ->
-                        // initialize default state
+
                         val checked = completedState.getOrPut(exercise.id) { false }
                         Card(
                             modifier = Modifier.fillMaxWidth(),

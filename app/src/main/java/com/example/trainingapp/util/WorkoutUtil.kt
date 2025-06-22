@@ -2,7 +2,7 @@ package com.example.trainingapp.util
 
 object WorkoutUtil {
     fun calculateOneRepMax(weight: Float, reps: Int): Float {
-        // Brzycki formula: 1RM = Weight × (36 / (37 - Reps))
+
         return if (reps < 1) weight else weight * (36f / (37f - reps))
     }
 
