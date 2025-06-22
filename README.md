@@ -6,11 +6,6 @@ TrainingApp to aplikacja mobilna na Android napisana w Kotlin z wykorzystaniem J
 
 ## 📱 Screenshots
 
-<div align="center">
- <img src="screens/dashboard.png" width="250" alt="Dashboard główny">
- <img src="screens/exercise-detail.png" width="250" alt="Szczegóły ćwiczenia">
-</div>
-
 <table>
  <tr>
    <td align="center">
@@ -57,6 +52,7 @@ Aplikacja wykorzystuje architekturę **MVVM (Model-View-ViewModel)** z następuj
 - **StateFlow/LiveData** - reaktywne zarządzanie danymi
 
 ## Struktura Pakietów
+```bash
 com.example.trainingapp/
 ├── data/                    # Warstwa danych
 │   ├── dao/                # Data Access Objects
@@ -75,7 +71,7 @@ com.example.trainingapp/
 ├── ui/theme/              # Motyw aplikacji
 ├── util/                  # Klasy pomocnicze
 └── viewmodels/            # ViewModels
-
+```
 ## Wykorzystane Biblioteki
 
 ### Core Android
