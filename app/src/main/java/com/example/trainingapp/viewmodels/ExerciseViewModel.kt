@@ -11,6 +11,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import android.content.Context
+import com.example.trainingapp.data.database.WorkoutDatabase
+import com.example.trainingapp.data.database.DatabaseInitializer
+import android.util.Log
+
+
+
+
 
 class ExerciseViewModel(application: Application) : AndroidViewModel(application) {
     private val app = application as TrainingApp
@@ -35,31 +44,44 @@ class ExerciseViewModel(application: Application) : AndroidViewModel(application
 
     init {
         loadBodyParts()
+        loadExercisesByBodyPart(0L)
     }
+
 
     fun getExerciseById(exerciseId: Long) {
         viewModelScope.launch(Dispatchers.IO) {
-            exerciseRepository.getExerciseById(exerciseId).observeForever { exercise ->
-                _exercise.value = exercise
+            val liveData = exerciseRepository.getExerciseById(exerciseId)
+            withContext(Dispatchers.Main) {
+                liveData.observeForever { exercise ->
+                    _exercise.value = exercise
+                }
             }
         }
     }
 
     fun loadExercisesByBodyPart(bodyPartId: Long) {
         _selectedBodyPart.value = bodyPartId
-
         viewModelScope.launch(Dispatchers.IO) {
-            if (bodyPartId == 0L) {
-                exerciseRepository.getAllExercises().observeForever { exercises ->
-                    _exercises.value = exercises ?: emptyList()
-                }
-            } else {
-                exerciseRepository.getExercisesByBodyPart(bodyPartId).observeForever { exercises ->
-                    _exercises.value = exercises ?: emptyList()
+            val liveData = if (bodyPartId == 0L)
+                exerciseRepository.getAllExercises()
+            else
+                exerciseRepository.getExercisesByBodyPart(bodyPartId)
+
+            withContext(Dispatchers.Main) {
+                liveData.observeForever { list ->
+                    _exercises.value = list
+                        ?.filter { exercise ->
+                            val q = _searchQuery.value.lowercase()
+                            q.isBlank()
+                                    || exercise.name.lowercase().contains(q)
+                                    || exercise.description.lowercase().contains(q)
+                        }
+                        ?: emptyList()
                 }
             }
         }
     }
+
 
     private fun loadBodyParts() {
         viewModelScope.launch(Dispatchers.IO) {
@@ -75,7 +97,10 @@ class ExerciseViewModel(application: Application) : AndroidViewModel(application
 
     fun setSearchQuery(query: String) {
         _searchQuery.value = query
+        loadExercisesByBodyPart(_selectedBodyPart.value ?: 0L)
     }
+
+
 
     fun getFilteredExercises(): List<Exercise> {
         val query = _searchQuery.value.lowercase()
@@ -86,6 +111,24 @@ class ExerciseViewModel(application: Application) : AndroidViewModel(application
             _exercises.value.filter {
                 it.name.lowercase().contains(query) ||
                         it.description.lowercase().contains(query)
+            }
+        }
+
+    }
+    fun forcePopulate() {
+        // 1) Populacja bazy we własnym scope ViewModelu
+        DatabaseInitializer.populateDatabase(database, viewModelScope)
+
+        // 2) Po chwili (asynchronicznie) sprawdź
+        viewModelScope.launch(Dispatchers.IO) {
+            val liveData = database.exerciseDao().getAllExercises()
+            withContext(Dispatchers.Main) {
+                liveData.observeForever { exercises ->
+                    Log.d("ForcePopulate", "Pobrano ${exercises?.size ?: 0} ćwiczeń:")
+                    exercises?.forEach {
+                        Log.d("ForcePopulate", "- ${it.name} (${it.bodyPartId})")
+                    }
+                }
             }
         }
     }

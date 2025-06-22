@@ -1,4 +1,5 @@
 package com.example.trainingapp.data.database
+
 import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
@@ -14,7 +15,8 @@ import kotlinx.coroutines.CoroutineScope
         Exercise::class,
         WorkoutPlan::class,
         WorkoutDay::class,
-        DayExercise::class
+        DayExercise::class,
+        PlanExerciseCrossRef::class
     ],
     version = 1,
     exportSchema = false
@@ -26,6 +28,8 @@ abstract class WorkoutDatabase : RoomDatabase() {
     abstract fun workoutPlanDao(): WorkoutPlanDao
     abstract fun workoutDayDao(): WorkoutDayDao
     abstract fun dayExerciseDao(): DayExerciseDao
+    abstract fun planDao(): PlanDao
+    abstract fun planExerciseDao(): PlanExerciseCrossRefDao
 
     companion object {
         @Volatile
@@ -36,7 +40,7 @@ abstract class WorkoutDatabase : RoomDatabase() {
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
                     WorkoutDatabase::class.java,
-                    "workout_database"
+                    "workout_db"
                 )
                     .fallbackToDestructiveMigration()
                     .addCallback(WorkoutDatabaseCallback(scope))
@@ -47,13 +51,9 @@ abstract class WorkoutDatabase : RoomDatabase() {
         }
     }
 
-    /**
-     * Callback do inicjalizacji bazy danych po jej utworzeniu
-     */
     private class WorkoutDatabaseCallback(
         private val scope: CoroutineScope
     ) : RoomDatabase.Callback() {
-
         override fun onCreate(db: SupportSQLiteDatabase) {
             super.onCreate(db)
             INSTANCE?.let { database ->

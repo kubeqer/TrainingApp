@@ -20,4 +20,6 @@ data class WorkoutPlan(
 
     @ColumnInfo(name = "is_active")
     val isActive: Boolean
+
 )
+

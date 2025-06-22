@@ -26,4 +26,7 @@ interface WorkoutDayDao {
 
     @Delete
     suspend fun delete(workoutDay: WorkoutDay)
+
+    @Query("SELECT * FROM workout_days WHERE plan_id = :planId")
+    suspend fun getWorkoutDaysByPlanImmediate(planId: Long): List<WorkoutDay>
 }

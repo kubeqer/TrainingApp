@@ -1,145 +1,115 @@
 package com.example.trainingapp.viewmodels
 
 import android.app.Application
-import android.util.Log
-import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.*
 import com.example.trainingapp.TrainingApp
 import com.example.trainingapp.data.entity.WorkoutDay
 import com.example.trainingapp.data.entity.WorkoutPlan
+import com.example.trainingapp.data.dao.PlanExerciseCrossRefDao
 import com.example.trainingapp.data.repository.WorkoutPlanRepository
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import java.util.Calendar
-import java.util.Date
+import java.util.*
+import androidx.lifecycle.Observer
+
 
 class CalendarViewModel(application: Application) : AndroidViewModel(application) {
-    private val tag = "CalendarViewModel"
-
     private val app = application as TrainingApp
-    private val database = app.database
-    private val workoutPlanRepository by lazy {
-        WorkoutPlanRepository(
-            database.workoutPlanDao(),
-            database.workoutDayDao()
-        )
-    }
+    private val workoutPlanRepo = WorkoutPlanRepository(
+        app.database.workoutPlanDao(),
+        app.database.workoutDayDao()
+    )
+    private val crossRefDao: PlanExerciseCrossRefDao = app.database.planExerciseDao()
 
-    private val _activePlan = MutableStateFlow<WorkoutPlan?>(null)
-    val activePlan: StateFlow<WorkoutPlan?> = _activePlan
+    // --- StateFlows holding our UI state ---
+    private val _activePlan   = MutableStateFlow<WorkoutPlan?>(null)
+    val activePlan: StateFlow<WorkoutPlan?>            = _activePlan.asStateFlow()
 
     private val _workoutDays = MutableStateFlow<List<WorkoutDay>>(emptyList())
-    val workoutDays: StateFlow<List<WorkoutDay>> = _workoutDays
+    val workoutDays: StateFlow<List<WorkoutDay>>       = _workoutDays.asStateFlow()
 
-    private var activePlansObserver: LiveData<List<WorkoutPlan>>? = null
-    private var workoutDaysObserver: LiveData<List<WorkoutDay>>? = null
+    private val _exerciseMap = MutableStateFlow<Map<Int,List<Long>>>(emptyMap())
+    val exerciseMap: StateFlow<Map<Int,List<Long>>>   = _exerciseMap.asStateFlow()
+
+    // --- LiveData observers so we can detach/reattach cleanly ---
+    private var activePlansLD: LiveData<List<WorkoutPlan>>? = null
+    private val activePlanObs = Observer<List<WorkoutPlan>> { plans ->
+        val plan = plans.firstOrNull()
+        _activePlan.value = plan
+        if (plan != null) {
+            observeWorkoutDays(plan.planId)
+            loadExerciseMap(plan.planId)
+        } else {
+            _workoutDays.value = emptyList()
+            _exerciseMap.value = emptyMap()
+        }
+    }
+
+    private var workoutDaysLD: LiveData<List<WorkoutDay>>? = null
+    private val workoutDaysObs = Observer<List<WorkoutDay>> { days ->
+        _workoutDays.value = days ?: emptyList()
+    }
 
     init {
-        Log.d(tag, "CalendarViewModel initialized")
-        loadActivePlan()
-    }
-
-    private fun loadActivePlan() {
-        viewModelScope.launch {
-            try {
-                Log.d(tag, "Loading active plan")
-                withContext(Dispatchers.IO) {
-                    activePlansObserver?.let { observer ->
-                        workoutPlanRepository.getActiveWorkoutPlans().removeObserver { observer }
-                    }
-                    activePlansObserver = workoutPlanRepository.getActiveWorkoutPlans()
-                    activePlansObserver?.observeForever { plans ->
-                        Log.d(tag, "Active plans updated: ${plans?.size ?: 0}")
-                        val plan = plans?.firstOrNull()
-                        _activePlan.value = plan
-
-                        plan?.let {
-                            loadWorkoutDays(it.planId)
-                        } ?: run {
-                            _workoutDays.value = emptyList()
-                        }
-                    }
-                }
-            } catch (e: Exception) {
-                Log.e(tag, "Error loading active plan", e)
-                _activePlan.value = null
-                _workoutDays.value = emptyList()
-            }
+        // 1) “Forever” attach our active-plan observer on the main thread
+        activePlansLD?.removeObserver(activePlanObs)
+        activePlansLD = workoutPlanRepo.getActiveWorkoutPlans().also { ld ->
+            ld.observeForever(activePlanObs)
         }
     }
 
-    private fun loadWorkoutDays(planId: Long) {
-        viewModelScope.launch {
-            try {
-                Log.d(tag, "Loading workout days for plan $planId")
-                withContext(Dispatchers.IO) {
-                    workoutDaysObserver?.let { observer ->
-                        workoutPlanRepository.getWorkoutDaysByPlan(planId).removeObserver { observer }
-                    }
-
-                    // Get workout days and observe changes
-                    workoutDaysObserver = workoutPlanRepository.getWorkoutDaysByPlan(planId)
-                    workoutDaysObserver?.observeForever { days ->
-                        Log.d(tag, "Workout days updated: ${days?.size ?: 0}")
-                        _workoutDays.value = days ?: emptyList()
-                    }
-                }
-            } catch (e: Exception) {
-                Log.e(tag, "Error loading workout days", e)
-                _workoutDays.value = emptyList()
-            }
+    /** Detach any old day-observer and attach a new one for this planId */
+    private fun observeWorkoutDays(planId: Long) {
+        workoutDaysLD?.removeObserver(workoutDaysObs)
+        workoutDaysLD = workoutPlanRepo.getWorkoutDaysByPlan(planId).also { ld ->
+            ld.observeForever(workoutDaysObs)
         }
     }
 
+    /** Fetch the plan⇆exercise cross-refs off the main thread and push into a StateFlow */
+    private fun loadExerciseMap(planId: Long) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val map = crossRefDao.getForPlan(planId)
+            _exerciseMap.value = map
+        }
+    }
+
+    /** Flip which plan is active in your DB; once that completes,
+     *  your LiveData observer will automatically fire again */
+    fun activatePlan(planId: Long) {
+        viewModelScope.launch(Dispatchers.IO) {
+            workoutPlanRepo.activateWorkoutPlan(planId)
+        }
+    }
+
+    /** Build a 7-day strip (Mon→Sun), pairing each date with
+     *  its optional WorkoutDay + the list of picked-exercise IDs. */
     fun getCurrentWeekSchedule(): List<DaySchedule> {
         val days = _workoutDays.value
-        Log.d(tag, "Getting week schedule with ${days.size} workout days")
-        val calendar = Calendar.getInstance()
-        calendar.firstDayOfWeek = Calendar.MONDAY
-        val today = calendar.get(Calendar.DAY_OF_WEEK)
-        val diff = if (today == Calendar.SUNDAY) 6 else today - Calendar.MONDAY
-        calendar.add(Calendar.DATE, -diff)
+        val exMap = _exerciseMap.value
 
-        val weekSchedule = mutableListOf<DaySchedule>()
-
-        for (i in 0 until 7) {
-            val dayOfWeek = i + 1
-            val date = calendar.time
-            val workoutDay = days.find { it.dayNumber == dayOfWeek }
-            Log.d(tag, "Day $dayOfWeek has workout: ${workoutDay != null}")
-
-            weekSchedule.add(
-                DaySchedule(
-                    date = date,
-                    workoutDay = workoutDay
-                )
-            )
-            calendar.add(Calendar.DAY_OF_YEAR, 1)
+        val cal = Calendar.getInstance().apply {
+            firstDayOfWeek = Calendar.MONDAY
         }
+        // rewind back to Monday
+        val dowRaw = cal.get(Calendar.DAY_OF_WEEK)
+        val diff   = if (dowRaw == Calendar.SUNDAY) 6 else dowRaw - Calendar.MONDAY
+        cal.add(Calendar.DATE, -diff)
 
-        return weekSchedule
-    }
-
-    fun activatePlan(planId: Long) {
-        viewModelScope.launch {
-            try {
-                Log.d(tag, "Activating plan $planId")
-                withContext(Dispatchers.IO) {
-                    workoutPlanRepository.activateWorkoutPlan(planId)
-                }
-                loadActivePlan()
-            } catch (e: Exception) {
-                Log.e(tag, "Error activating plan", e)
-            }
+        return (1..7).map { dayNum ->
+            val date       = cal.time
+            val workoutDay = days.find { it.dayNumber == dayNum }
+            val exerciseIds= exMap[dayNum] ?: emptyList()
+            cal.add(Calendar.DATE, 1)
+            DaySchedule(date, workoutDay, exerciseIds)
         }
     }
 }
 
+/** Carries one calendar date, an optional WorkoutDay row, plus that day’s exercise-IDs */
 data class DaySchedule(
     val date: Date,
-    val workoutDay: WorkoutDay?
+    val workoutDay: WorkoutDay?,
+    val exerciseIds: List<Long> = emptyList()
 )

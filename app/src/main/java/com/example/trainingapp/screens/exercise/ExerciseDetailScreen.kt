@@ -22,6 +22,13 @@ import com.example.trainingapp.screens.exercise.components.ExerciseDetailCard
 import com.example.trainingapp.ui.theme.BackgroundColor
 import com.example.trainingapp.ui.theme.SportRed
 import com.example.trainingapp.viewmodels.ExerciseViewModel
+import android.webkit.WebView
+import android.webkit.WebViewClient
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.viewinterop.AndroidView
+import android.net.Uri
+import androidx.compose.ui.unit.dp
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -58,16 +65,40 @@ fun ExerciseDetailScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             exercise?.let { ex ->
-                Box(
+                // 1️⃣ Wyciągamy ID filmu z URL (parametr v)
+                val videoId = remember(ex.youtube_url) {
+                    Uri.parse(ex.youtube_url).getQueryParameter("v")
+                        ?: ex.youtube_url.substringAfterLast("/")
+                }
+                // 2️⃣ Osadzamy WebView z iframe YouTube
+                AndroidView(
+                    factory = { ctx ->
+                        WebView(ctx).apply {
+                            settings.javaScriptEnabled = true
+                            webViewClient = WebViewClient()
+                            loadData(
+                                """
+                    <html><body style="margin:0;padding:0;">
+                      <iframe
+                        width="100%"
+                        height="200"
+                        src="https://www.youtube.com/embed/$videoId"
+                        frameborder="0"
+                        allowfullscreen>
+                      </iframe>
+                    </body></html>
+                    """.trimIndent(),
+                                "text/html",
+                                "utf-8"
+                            )
+                        }
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(200.dp)
                         .clip(RoundedCornerShape(16.dp))
-                        .background(Color.LightGray),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("Exercise Demonstration", color = Color.White)
-                }
+                )
+
                 ExerciseDetailCard(
                     title = "Description",
                     content = ex.description
@@ -79,10 +110,10 @@ fun ExerciseDetailScreen(
                 ExerciseDetailCard(
                     title = "Suggested Training",
                     content = """
-                        Beginner: 3 sets of 8-10 reps
-                        Intermediate: 4 sets of 10-12 reps
-                        Advanced: 5 sets of 12-15 reps
-                    """.trimIndent()
+            Beginner: 3 sets of 8-10 reps
+            Intermediate: 4 sets of 10-12 reps
+            Advanced: 5 sets of 12-15 reps
+        """.trimIndent()
                 )
                 Button(
                     onClick = { /* TODO: Implement add to workout */ },

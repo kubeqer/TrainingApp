@@ -27,6 +27,9 @@ import com.example.trainingapp.screens.dashboard.components.TodaysWorkoutCard
 import com.example.trainingapp.ui.theme.BackgroundColor
 import com.example.trainingapp.ui.theme.SportRed
 import com.example.trainingapp.ui.theme.TextMedium
+import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.Edit
+
 
 private const val TAG = "TrainingDashboard"
 
@@ -127,7 +130,7 @@ fun TrainingDashboard(
                 ) {
                     ActionButton(
                         title = "Create Plan",
-                        icon = Icons.Rounded.Create,
+                        icon = Icons.Rounded.Add,
                         modifier = Modifier.weight(1f),
                         onClick = {
                             try {
@@ -140,13 +143,13 @@ fun TrainingDashboard(
                     )
 
                     ActionButton(
-                        title = "Add Exercise",
-                        icon = Icons.Rounded.Add,
+                        title = "Edit Plan",
+                        icon = Icons.Rounded.Edit,
                         modifier = Modifier.weight(1f),
                         onClick = {
                             try {
-                                Log.d(TAG, "Navigating to exercises/0")
-                                navController.navigate("exercises/0")
+                                Log.d(TAG, "Navigating to edit plans")
+                                navController.navigate(AppDestinations.EDIT_PLANS)
                             } catch (e: Exception) {
                                 Log.e(TAG, "Navigation error", e)
                             }

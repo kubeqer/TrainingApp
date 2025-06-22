@@ -20,6 +20,8 @@ import com.example.trainingapp.screens.exercise.components.ExerciseCard
 import com.example.trainingapp.ui.theme.BackgroundColor
 import com.example.trainingapp.ui.theme.TextDark
 import com.example.trainingapp.viewmodels.ExerciseViewModel
+import androidx.compose.ui.platform.LocalContext
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -28,16 +30,21 @@ fun ExerciseListScreen(
     navController: NavController,
     viewModel: ExerciseViewModel = viewModel()
 ) {
+    val context = LocalContext.current
+
     LaunchedEffect(bodyPartId) {
         viewModel.loadExercisesByBodyPart(bodyPartId)
+        viewModel.setSearchQuery("")
     }
 
-    val exercises = viewModel.getFilteredExercises()
+    val exercises by viewModel.exercises.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val bodyParts by viewModel.bodyParts.collectAsState()
 
     val bodyPartName = if (bodyPartId == 0L) "All Exercises" else bodyParts[bodyPartId] ?: "Exercises"
 
+    println(">>> Search query: $searchQuery")
+    println(">>> Exercises: ${exercises.map { it.name }}")
     Scaffold(
         topBar = {
             TopAppBar(
