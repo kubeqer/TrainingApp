@@ -64,21 +64,21 @@ class CalendarViewModel(application: Application) : AndroidViewModel(application
         attachActivePlanObserver()
     }
 
-    
+
     private fun attachActivePlanObserver() {
         activePlansLD?.removeObserver(activePlanObserver)
         activePlansLD = workoutPlanRepo.getActiveWorkoutPlans()
         activePlansLD?.observeForever(activePlanObserver)
     }
 
-    
+
     private fun loadWorkoutDays(planId: Long) {
         workoutDaysLD?.removeObserver(workoutDaysObserver)
         workoutDaysLD = workoutPlanRepo.getWorkoutDaysByPlan(planId)
         workoutDaysLD?.observeForever(workoutDaysObserver)
     }
 
-    
+
     private fun loadExerciseMap(planId: Long) {
         viewModelScope.launch(Dispatchers.IO) {
             val map = crossRefDao.getForPlan(planId)
@@ -86,7 +86,7 @@ class CalendarViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
-    
+
     fun activatePlan(planId: Long) {
         viewModelScope.launch(Dispatchers.IO) {
             workoutPlanRepo.activateWorkoutPlan(planId)
@@ -94,7 +94,7 @@ class CalendarViewModel(application: Application) : AndroidViewModel(application
         attachActivePlanObserver()
     }
 
-    
+
     fun getCurrentWeekSchedule(): List<DaySchedule> {
         val days = _workoutDays.value
         val exMap = _exerciseMap.value

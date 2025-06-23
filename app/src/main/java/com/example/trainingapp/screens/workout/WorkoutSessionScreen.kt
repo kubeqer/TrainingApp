@@ -18,6 +18,7 @@ import com.example.trainingapp.navigation.AppDestinations
 import com.example.trainingapp.screens.calendar.components.WeekView
 import com.example.trainingapp.viewmodels.CalendarViewModel
 import com.example.trainingapp.viewmodels.ExerciseViewModel
+import com.example.trainingapp.viewmodels.WorkoutSessionViewModel
 import java.util.Calendar
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -26,7 +27,8 @@ fun WorkoutSessionScreen(
     planId: Long,
     navController: NavController,
     calendarVm: CalendarViewModel = viewModel(),
-    exerciseVm: ExerciseViewModel = viewModel()
+    exerciseVm: ExerciseViewModel = viewModel(),
+    sessionVm: WorkoutSessionViewModel = viewModel()
 ) {
 
     LaunchedEffect(planId) {
@@ -42,8 +44,6 @@ fun WorkoutSessionScreen(
 
     val allExercises by exerciseVm.exercises.collectAsStateWithLifecycle()
 
-    val completedState = remember { mutableStateMapOf<Long, Boolean>() }
-
     val today = Calendar.getInstance().time
     val todayEntry = weekSchedule.firstOrNull { ds ->
         val c1 = Calendar.getInstance().apply { time = ds.date }
@@ -53,6 +53,7 @@ fun WorkoutSessionScreen(
     }
     val todayIds = todayEntry?.exerciseIds.orEmpty()
     val todayExercises = allExercises.filter { it.id in todayIds }
+    val completedState = sessionVm.completed
 
     Scaffold(
         topBar = {
@@ -74,7 +75,7 @@ fun WorkoutSessionScreen(
                 LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     items(todayExercises) { exercise ->
 
-                        val checked = completedState.getOrPut(exercise.id) { false }
+                        val checked: Boolean = completedState[exercise.id] ?: false
                         Card(
                             modifier = Modifier.fillMaxWidth(),
                             shape = MaterialTheme.shapes.medium,
@@ -89,7 +90,7 @@ fun WorkoutSessionScreen(
                             ) {
                                 Checkbox(
                                     checked = checked,
-                                    onCheckedChange = { completedState[exercise.id] = it },
+                                    onCheckedChange = {sessionVm.setCompleted(exercise.id, it)},
                                     modifier = Modifier.padding(end = 16.dp)
                                 )
                                 Text(

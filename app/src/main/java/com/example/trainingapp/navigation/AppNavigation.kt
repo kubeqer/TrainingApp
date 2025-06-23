@@ -35,7 +35,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import com.example.trainingapp.viewmodels.CalendarViewModel
 import com.example.trainingapp.screens.gallery.GalleryScreen
 import android.net.Uri
-
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
+import androidx.compose.material3.CircularProgressIndicator
 
 private const val TAG = "AppNavigation"
 
@@ -71,13 +75,13 @@ fun AppNavigation(
     val planRepo = remember { PlanRepository(planDao, crossRefDao) }
     val exerciseDao = database.exerciseDao()
     val exerciseRepo = remember { ExerciseRepository(exerciseDao) }
-    val calendarVm: CalendarViewModel = viewModel()
 
+    val exerciseVm: ExerciseViewModel = viewModel()
+
+    val calendarVm: CalendarViewModel = viewModel()
     val planVm: PlanViewModel = viewModel(
         factory = PlanViewModelFactory(planRepo)
     )
-
-    val exerciseVm: ExerciseViewModel = viewModel()
 
     NavHost(navController = navController, startDestination = AppDestinations.HOME) {
         composable(AppDestinations.HOME) {
@@ -126,9 +130,11 @@ fun AppNavigation(
         }
 
         composable(route = AppDestinations.CALENDAR) {
-            val calendarVm: CalendarViewModel = viewModel()
-            CalendarScreen(navController = navController, calendarVm = calendarVm)
-
+            CalendarScreen(
+                navController = navController,
+                calendarVm   = calendarVm,
+                planVm       = planVm
+            )
         }
 
         composable("muscleGroups") {
@@ -141,41 +147,57 @@ fun AppNavigation(
         composable(
             route = AppDestinations.EDIT_PLAN_ROUTE,
             arguments = listOf(navArgument("planId") { type = NavType.LongType })
-                    ) { back ->
+        ) { back ->
             val planId = back.arguments!!.getLong("planId")
-            LaunchedEffect(planId) { planVm.startEditById(planId) }
-            val days = planVm.selectedDays
-            SelectDaysScreen(
-                planViewModel = planVm,
-                onNext = {
-                    val dayToEdit = days.firstOrNull() ?: 1
-                     navController.navigate(AppDestinations.selectExercisesRoute(dayToEdit))
+            LaunchedEffect(planId) {}
+            if (planVm.isLoading) {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
                 }
-            )
+            } else {
+                val days = planVm.selectedDays
+                SelectDaysScreen(
+                    planViewModel = planVm,
+                    onNext = {
+                        val dayToEdit = days.firstOrNull() ?: 1
+                        navController.navigate(AppDestinations.selectExercisesRoute(dayToEdit))
+                    }
+                )
+            }
         }
         composable(
             route = AppDestinations.SELECT_PLAN_EXERCISES,
             arguments = listOf(navArgument("day") { type = NavType.IntType })
-        ) { backStackEntry ->
-            val day = backStackEntry.arguments!!.getInt("day")
+        ) { back ->
+            val day = back.arguments!!.getInt("day")
             val allExercises by exerciseVm.exercises.collectAsState()
-            SelectExercisesScreen(
-                allExercises  = allExercises,
-                planViewModel = planVm,
-                day           = day,
-                onSave        = {
-                    planVm.savePlan()
-                    navController.navigate(AppDestinations.EDIT_PLANS)
+            if (planVm.isLoading) {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
                 }
-            )
+            } else {
+                SelectExercisesScreen(
+                    allExercises  = allExercises,
+                    planViewModel = planVm,
+                    day           = day,
+                    onSave        = {
+                        planVm.savePlan {
+                            navController.navigate(AppDestinations.EDIT_PLANS)
+                        }
+                    }
+                )
+            }
         }
         composable(AppDestinations.EDIT_PLANS) {
             EditPlansScreen(
-                planList     = planVm.plans,                   // zamiast allPlans
+                planList     = planVm.plans,
                 activePlanId = planVm.activePlanId,
-                onSelect     = { planVm.setActivePlanById(it) },  // zamiast setActivePlan
-                onDelete     = { planVm.deletePlanById(it) },     // zamiast deletePlan
-                onEditClick  = { navController.navigate(AppDestinations.editPlanRoute(it)) },
+                onSelect     = { planVm.setActivePlanById(it) },
+                onDelete     = { planVm.deletePlanById(it) },
+                onEditClick  = { planId ->
+                    planVm.startEditById(planId)
+                    navController.navigate(AppDestinations.editPlanRoute(planId))
+                },
                 onBack       = { navController.popBackStack() }
             )
         }

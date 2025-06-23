@@ -68,4 +68,8 @@ class PlanRepository(
             exercisesByDay = exercisesMap
         )
     }
+    suspend fun activateWorkoutPlan(planId: Long) {
+        planDao.deactivateAllPlans()
+        planDao.activatePlanById(planId)
+    }
 }

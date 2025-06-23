@@ -7,6 +7,8 @@ import com.example.trainingapp.data.entity.WorkoutPlan
 import com.example.trainingapp.data.model.WorkoutPlanModel
 import com.example.trainingapp.data.repository.PlanRepository
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 
 class PlanViewModel(
@@ -30,27 +32,28 @@ class PlanViewModel(
     }
 
 
-    
+
     private var editingPlanId: Long? = null
 
-    
+
     var planName by mutableStateOf("")
         private set
 
-    
+
     private val _selectedDays = mutableStateListOf<Int>()
     val selectedDays: List<Int> get() = _selectedDays
 
-    
+
     private val _exercisesByDay = mutableStateMapOf<Int, MutableList<Long>>()
     val exercisesByDay: Map<Int, List<Long>> get() = _exercisesByDay
 
-    
+
     fun getSelectedExercisesForDay(day: Int): List<Long> =
         _exercisesByDay[day]?.toList() ?: emptyList()
 
+    var isLoading by mutableStateOf(false)
+        private set
 
-    
     fun startNew() {
         editingPlanId = null
         planName = ""
@@ -58,7 +61,7 @@ class PlanViewModel(
         _exercisesByDay.clear()
     }
 
-    
+
     fun startEdit(ui: WorkoutPlanModel) {
         editingPlanId = ui.id
         planName = ui.name
@@ -69,9 +72,10 @@ class PlanViewModel(
         }
     }
 
-    
+
     fun startEditById(planId: Long) {
         editingPlanId = planId
+        isLoading = true
         viewModelScope.launch {
             val ui = repository.loadPlanModel(planId)
             planName = ui.name
@@ -80,26 +84,27 @@ class PlanViewModel(
             ui.exercisesByDay.forEach { (day, list) ->
                 _exercisesByDay[day] = list.toMutableList()
             }
+            isLoading = false
         }
     }
 
-    
+
     fun updatePlanName(newName: String) {
         planName = newName
     }
 
-    
+
     fun toggleDay(day: Int) {
         if (_selectedDays.contains(day)) _selectedDays.remove(day)
         else _selectedDays.add(day)
     }
 
-    
+
     fun setExercisesForDay(day: Int, list: List<Long>) {
         _exercisesByDay[day] = list.toMutableList()
     }
 
-    
+
     fun toggleExercise(day: Int, exerciseId: Long) {
         val list = _exercisesByDay.getOrPut(day) { mutableStateListOf() }
         if (list.contains(exerciseId)) list.remove(exerciseId)
@@ -107,23 +112,22 @@ class PlanViewModel(
     }
 
 
-    
+
     fun savePlan(onComplete: () -> Unit = {}) {
-        val id = editingPlanId ?: 0L
         val model = WorkoutPlanModel(
-            id = id,
-            name = planName,
-            days = _selectedDays.toList(),
+            id             = editingPlanId ?: 0L,
+            name           = planName,
+            days           = _selectedDays.toList(),
             exercisesByDay = _exercisesByDay.mapValues { it.value.toList() }
         )
         viewModelScope.launch {
             repository.createOrUpdate(model)
+            startNew()
             onComplete()
         }
-        startNew()
     }
 
-    
+
     fun deletePlan(ui: WorkoutPlanModel) {
         viewModelScope.launch {
             repository.delete(ui)
@@ -131,23 +135,23 @@ class PlanViewModel(
         }
     }
 
-    
+
     fun deletePlanById(planId: Long) {
         plans.firstOrNull { it.id == planId }?.let { deletePlan(it) }
     }
 
-    
+
     fun activatePlan(ui: WorkoutPlanModel) {
         viewModelScope.launch {
             repository.createOrUpdate(ui.copy(exercisesByDay = ui.exercisesByDay))
         }
     }
 
-    
+
     fun setActivePlanById(planId: Long) {
-        plans.firstOrNull { it.id == planId }?.let { ui ->
-            viewModelScope.launch {
-                repository.createOrUpdate(ui)
+        viewModelScope.launch(Dispatchers.IO) {
+            repository.activateWorkoutPlan(planId)
+            withContext(Dispatchers.Main) {
                 activePlanId = planId
             }
         }

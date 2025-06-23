@@ -3,6 +3,9 @@ package com.example.trainingapp.data.dao
 import androidx.lifecycle.LiveData
 import androidx.room.*
 import com.example.trainingapp.data.entity.WorkoutPlan
+import androidx.room.Dao
+import androidx.room.Query
+
 
 @Dao
 interface PlanDao {
@@ -23,4 +26,10 @@ interface PlanDao {
 
     @Delete
     suspend fun deletePlan(plan: WorkoutPlan)
+
+    @Query("UPDATE workout_plans SET is_active = 0")
+    suspend fun deactivateAllPlans()
+
+    @Query("UPDATE workout_plans SET is_active = 1 WHERE plan_id = :planId")
+    suspend fun activatePlanById(planId: Long)
 }

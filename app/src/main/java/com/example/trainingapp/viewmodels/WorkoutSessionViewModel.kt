@@ -13,6 +13,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.util.Calendar
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.snapshots.SnapshotStateMap
 
 class WorkoutSessionViewModel(application: Application) : AndroidViewModel(application) {
     private val app = application as TrainingApp
@@ -29,6 +31,9 @@ class WorkoutSessionViewModel(application: Application) : AndroidViewModel(appli
     private var currentWorkoutId: Long? = null
     private var currentPlanId: Long? = null
     private var exercisesCompleted = 0
+    private val _completed = mutableStateMapOf<Long, Boolean>()
+    val completed: SnapshotStateMap<Long, Boolean> = _completed
+
 
     fun startWorkout(planId: Long) {
         currentPlanId = planId
@@ -126,6 +131,9 @@ class WorkoutSessionViewModel(application: Application) : AndroidViewModel(appli
         exercisesCompleted = 0
         currentWorkoutId = null
         currentPlanId = null
+    }
+    fun setCompleted(exerciseId: Long, done: Boolean) {
+        _completed[exerciseId] = done
     }
 }
 

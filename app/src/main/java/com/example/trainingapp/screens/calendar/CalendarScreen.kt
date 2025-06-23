@@ -37,12 +37,11 @@ private const val TAG = "CalendarScreen"
 @Composable
 fun CalendarScreen(
     navController: NavController,
-    calendarVm: CalendarViewModel = viewModel()
+    calendarVm: CalendarViewModel,
+    planVm: PlanViewModel
 ) {
 
     val app = LocalContext.current.applicationContext as TrainingApp
-    val planRepo = remember { PlanRepository(app.database.planDao(), app.database.planExerciseDao()) }
-    val planVm: PlanViewModel = viewModel(factory = PlanViewModelFactory(planRepo))
 
     LaunchedEffect(planVm.activePlanId) {
         planVm.activePlanId?.takeIf { it > 0L }?.let { calendarVm.activatePlan(it) }
