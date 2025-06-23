@@ -1,5 +1,9 @@
 # TrainingApp - Aplikacja do Planowania Treningów
 
+## Figma
+ - [Poprawne wykonanie 4 ekranow](https://www.figma.com/design/R3QPcbV8tODxNONXHAizfp/Projekt_AM?node-id=0-1&t=dMXB3yMkFvcdmS0C-1)
+ - [Szkic](https://www.figma.com/design/OwrNjDabi4x4In2xEosAqW/projekt-mobilny?node-id=0-1&t=lxe0yDU9AhcLD9d1-1)
+
 ## Opis Aplikacji
 
 TrainingApp to aplikacja mobilna na Android napisana w Kotlin z wykorzystaniem Jetpack Compose, która umożliwia planowanie i śledzenie treningów siłowych. Aplikacja pozwala na tworzenie spersonalizowanych planów treningowych, przeglądanie bazy ćwiczeń oraz monitorowanie postępów.
