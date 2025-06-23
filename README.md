@@ -4,7 +4,7 @@
 
 TrainingApp to aplikacja mobilna na Android napisana w Kotlin z wykorzystaniem Jetpack Compose, która umożliwia planowanie i śledzenie treningów siłowych. Aplikacja pozwala na tworzenie spersonalizowanych planów treningowych, przeglądanie bazy ćwiczeń oraz monitorowanie postępów.
 
-## 📱 Screenshots
+## Screenshots
 
 <table>
  <tr>
